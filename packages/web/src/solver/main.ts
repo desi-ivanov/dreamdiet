@@ -1,6 +1,6 @@
 import { LP } from "glpk.js";
 import GLPK from "glpk.js";
-import { Meal, MealPart, MealSpec } from "@dreamdiet/interfaces/src/index";
+import { Meal, MealPart, MealSpec, MealSpecPerc } from "@dreamdiet/interfaces/src/index";
 
 const groupBy = <T>(arr: T[], key: (t: T) => string): { [key: string]: T[] } => {
   const res: { [key: string]: T[] } = {};
@@ -13,8 +13,15 @@ const groupBy = <T>(arr: T[], key: (t: T) => string): { [key: string]: T[] } => 
   });
   return res;
 };
-type Problem = { glpk: GLPK.GLPK; mealSpecs: MealSpec[]; meals: Meal[]; tolerance: number };
-export const solver2 = async (problem: Problem): Promise<{ mealSpec: MealSpec; mealParts: MealPart[] }[]> => {
+type Problem = { glpk: GLPK.GLPK; totals: { protein: number; carbs: number; fat: number }; mealSpecs: MealSpecPerc[]; meals: Meal[]; tolerance: number };
+
+const vtoc = {
+  protein: 4,
+  carbs: 4,
+  fat: 9,
+};
+
+export const solver2 = async (problem: Problem): Promise<{ mealSpecPerc: MealSpecPerc; mealParts: MealPart[] }[]> => {
   const { glpk } = problem;
   const reqTags = problem.mealSpecs.map((p) => new Set(p.req.tags));
   const usablePerMeals = problem.mealSpecs.map((p, i) => ({
@@ -34,15 +41,19 @@ export const solver2 = async (problem: Problem): Promise<{ mealSpec: MealSpec; m
     },
     subjectTo: usablePerMeals
       .flatMap(({ usable, mealSpec }, j) => [
-        ...(mealSpec.variant === "exactly" ? [] : (["protein", "carbs", "fat"] as const)).map((valName) => ({
-          name: `${valName}_${j}`,
-          vars: usable.flatMap((meal, i) => [{ name: `x_${j}_${i}`, coef: meal[valName] }]),
-          bnds: {
-            type: glpk.GLP_DB,
-            ub: problem.mealSpecs[j].req[valName] * 3,
-            lb: problem.mealSpecs[j].req[valName] * 1,
-          },
-        })),
+        ...(mealSpec.variant === "exactly"
+          ? []
+          : [
+              {
+                name: `meal_${j}`,
+                vars: usable.flatMap((meal, i) => ({ name: `x_${j}_${i}`, coef: (["protein", "carbs", "fat"] as const).map((valName) => meal[valName] * vtoc[valName]).reduce((a, v) => a + v) })),
+                bnds: {
+                  type: glpk.GLP_DB,
+                  ub: mealSpec.req.caloricPerc * (problem.totals.protein * 4 + problem.totals.carbs * 4 + problem.totals.fat * 9) * 2,
+                  lb: mealSpec.req.caloricPerc * (problem.totals.protein * 4 + problem.totals.carbs * 4 + problem.totals.fat * 9) * 0.9,
+                },
+              },
+            ]),
         ...(mealSpec.variant === "at-least" || mealSpec.variant === "exactly"
           ? mealSpec.forced.map((f, k) => ({
               name: `forced_${j}_f${k}`,
@@ -68,8 +79,8 @@ export const solver2 = async (problem: Problem): Promise<{ mealSpec: MealSpec; m
           vars: usablePerMeals.flatMap(({ usable }, j) => usable.flatMap((meal, i) => [{ name: `x_${j}_${i}`, coef: meal[valName] }])),
           bnds: {
             type: glpk.GLP_DB,
-            ub: problem.mealSpecs.reduce((a, p) => a + p.req[valName], 0) * (1 + problem.tolerance),
-            lb: problem.mealSpecs.reduce((a, p) => a + p.req[valName], 0) * Math.max(1 - problem.tolerance, 0),
+            ub: problem.totals[valName] * (1 + problem.tolerance),
+            lb: problem.totals[valName] * Math.max(1 - problem.tolerance, 0),
           },
         }))
       ),
@@ -96,18 +107,16 @@ export const solver2 = async (problem: Problem): Promise<{ mealSpec: MealSpec; m
       (x) => x.key.split("_")[1]
     )
   ).map((v, j) => ({
-    mealSpec: problem.mealSpecs[j],
+    mealSpecPerc: problem.mealSpecs[j],
     mealParts: v,
   }));
 };
 export const minTolerane = async (problem: Problem, stopRangeLR: number): Promise<Awaited<ReturnType<typeof solver2>>> => {
-  // return solver2(problem);
   let l = 0;
   let r = 5;
   let p: Awaited<ReturnType<typeof solver2>> | null = null;
   while (r - l > stopRangeLR) {
     const t = (r + l) / 2;
-    console.log("Tolerance", l, r);
     try {
       p = await solver2({ ...problem, tolerance: t });
       r = t;

@@ -37,6 +37,7 @@ export type MealReq = {
   fat: number;
   tags: string[];
 };
+
 export type MealSpec = {
   name: string;
   req: MealReq;
@@ -44,6 +45,20 @@ export type MealSpec = {
   variant: "any" | "only-use" | "at-least" | "exactly";
   tolerance: number;
 };
+
+export type MealReqPerc = {
+  caloricPerc: number;
+  tags: string[];
+};
+
+export type MealSpecPerc = {
+  name: string;
+  req: MealReqPerc;
+  forced: { name: string; grams: number }[];
+  variant: "any" | "only-use" | "at-least" | "exactly";
+  tolerance: number;
+};
+
 export type Meal = {
   name: string;
   protein: number;
@@ -67,8 +82,17 @@ export type DailyPlan = {
 };
 export type MealSchema = {
   name: string;
-  specs: MealSpec[];
-};
+} & (
+  | {
+      tag: "exact";
+      specs: MealSpec[];
+    }
+  | {
+      tag: "perc";
+      specs: MealSpecPerc[];
+      totals: { protein: number; carbs: number; fat: number };
+    }
+);
 
 export type CreateMealSchemaRequest = {
   schema: MealSchema;

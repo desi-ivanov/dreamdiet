@@ -1,5 +1,5 @@
-import { MealPart, MealSpec, WithId, MealSchemaEntry, Ingredient, MealReq } from "@dreamdiet/interfaces/src/";
-import { Alert, Button, Checkbox, Flex, Form, Input, InputNumber, List, Space, Spin, Table, Tabs, TabsProps, Tag } from "antd";
+import { Ingredient, MealPart, MealReqPerc, MealSchemaEntry, MealSpec, MealSpecPerc, WithId } from "@dreamdiet/interfaces/src/";
+import { Alert, Button, Flex, Form, Input, InputNumber, Space, Spin, Table, Tabs, TabsProps, Tag } from "antd";
 import { useForm } from "antd/es/form/Form";
 import confirm from "antd/es/modal/confirm";
 import { query, where } from "firebase/firestore";
@@ -13,9 +13,9 @@ import { FullscreenLoader, loader } from "./components/Loader";
 import { mealSchemaCollection, plainIngredients } from "./data/collections";
 import { useFirestoreQuery } from "./hooks/useFirestoreQuery";
 import { db } from "./solver/db";
-import { minTolerane, solver2 } from "./solver/main";
-import { tagF } from "./utils/tagF";
+import { minTolerane } from "./solver/main";
 import { errToStr, showError } from "./utils/showError";
+import { tagF } from "./utils/tagF";
 
 const loadGlpk = () => import("glpk.js").then(({ default: loadGlpk }) => (loadGlpk as () => Promise<GLPK>)());
 const Colors = {
@@ -43,6 +43,7 @@ const RequirementsMaker = () => {
               glpk,
               mealSpecs: state.items.map((x) => x.value),
               tolerance: state.tolerance,
+              totals: state.totals,
               meals: db,
             },
             0.001
@@ -61,7 +62,9 @@ const RequirementsMaker = () => {
         loader(async () =>
           api.createMealSchema({
             schema: {
+              tag: "perc",
               name: values.name,
+              totals: state.totals,
               specs: state.items.map((x) => x.value),
             },
           })
@@ -97,6 +100,8 @@ const RequirementsMaker = () => {
         id: state.schema.id,
         schema: {
           name: state.schema.data.schema.name,
+          tag: "perc",
+          totals: state.totals,
           specs: state.items.map((x) => x.value),
         },
       });
@@ -110,9 +115,7 @@ const RequirementsMaker = () => {
         <thead>
           <tr>
             <th>Name</th>
-            <th>Proteins</th>
-            <th>Carbs</th>
-            <th>Fats</th>
+            <th>Caloricperc</th>
             <th>Tags</th>
             <th>Actions</th>
           </tr>
@@ -122,23 +125,21 @@ const RequirementsMaker = () => {
             <MealReqComponent key={req.id} id={req.id} />
           ))}
           <tr>
-            <td>Total</td>
+            <td>Total {state.totals.protein * 4 + state.totals.carbs * 4 + state.totals.fat * 9}c</td>
             <td>
-              <span style={{ color: Colors.p }}>{state.items.map((v) => v.value.req.protein).reduce((a, v) => a + v)}</span>g
+              P<input type="number" value={state.totals.protein} onChange={(e) => useMealReqState.setState((z) => ({ ...z, totals: { ...z.totals, protein: parseInt(e.target.value) } }))} />
             </td>
             <td>
-              <span style={{ color: Colors.c }}>{state.items.map((v) => v.value.req.carbs).reduce((a, v) => a + v)}</span>g
+              C<input type="number" value={state.totals.carbs} onChange={(e) => useMealReqState.setState((z) => ({ ...z, totals: { ...z.totals, carbs: parseInt(e.target.value) } }))} />
             </td>
             <td>
-              <span style={{ color: Colors.f }}>{state.items.map((v) => v.value.req.fat).reduce((a, v) => a + v)}</span>g
+              F<input type="number" value={state.totals.fat} onChange={(e) => useMealReqState.setState((z) => ({ ...z, totals: { ...z.totals, fat: parseInt(e.target.value) } }))} />
             </td>
-            <td></td>
-            <td></td>
           </tr>
         </tbody>
       </table>
       <Space direction="horizontal">
-        <button onClick={() => useMealReqState.setState((s) => ({ ...s, items: [...s.items, { id: Date.now().toString(), value: { ...defaultMealSpec } }] }))}>Add</button>
+        <button onClick={() => useMealReqState.setState((s) => ({ ...s, items: [...s.items, { id: Date.now().toString(), value: { ...defaultMealSpecPerc } }] }))}>Add</button>
         <button onClick={handleSave} disabled={!state.schema}>
           Save
         </button>
@@ -157,11 +158,13 @@ const SchemaSelector = () => {
   if (q.tag === "undefined") return <>No schemas</>;
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const schema = q.value.find((x) => x.id === e.target.value);
-    if (schema) {
+    if (schema && schema.data.schema.tag === "perc") {
+      const totals = schema.data.schema.totals;
       useMealReqState.setState((s) => ({
         ...s,
         schema: schema,
-        items: schema.data.schema.specs.map((x, i) => ({ id: i + "", value: x })),
+        totals: totals,
+        items: schema.data.schema.specs.map((x, i) => ({ id: i + "", value: x as MealSpecPerc })),
       }));
     }
   };
@@ -291,19 +294,19 @@ const pickIngredient = (onFinish: (ingredient: Ingredient) => void) => {
 
 const MealReqComponent: React.FC<{ id: string }> = ({ id }) => {
   const state = useMealReqState((s) => s.items.find((x) => x.id === id));
-  const updateMap = (f: (v: MealSpec) => MealSpec) => useMealReqState.setState((s) => ({ ...s, items: s.items.map((x) => (x.id === id ? { ...x, value: f(x.value) } : x)) }));
+  const updateMap = (f: (v: MealSpecPerc) => MealSpecPerc) => useMealReqState.setState((s) => ({ ...s, items: s.items.map((x) => (x.id === id ? { ...x, value: f(x.value) } : x)) }));
   const variants = ["any", "at-least", "exactly", "only-use"] as const;
 
-  type check = typeof variants[number] extends MealSpec["variant"]
-    ? MealSpec["variant"] extends typeof variants[number]
+  type check = typeof variants[number] extends MealSpecPerc["variant"]
+    ? MealSpecPerc["variant"] extends typeof variants[number]
       ? true
-      : ["missing:", [Exclude<MealSpec["variant"], typeof variants[number]>]]
-    : ["invalid:", [Exclude<typeof variants[number], MealSpec["variant"]>]];
+      : ["missing:", [Exclude<MealSpecPerc["variant"], typeof variants[number]>]]
+    : ["invalid:", [Exclude<typeof variants[number], MealSpecPerc["variant"]>]];
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const _check: check = true; // just a type check to enforce all variants
 
   const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    updateMap((v) => ({ ...v, variant: e.target.value as MealSpec["variant"] }));
+    updateMap((v) => ({ ...v, variant: e.target.value as MealSpecPerc["variant"] }));
   };
 
   const handleInclude = () => {
@@ -347,13 +350,7 @@ const MealReqComponent: React.FC<{ id: string }> = ({ id }) => {
           <input type="text" value={state.value.name} onChange={(e) => updateMap((v) => ({ ...v, name: e.target.value }))} />
         </td>
         <td>
-          <input type="number" value={state.value.req.protein} onChange={(e) => updateMap((v) => ({ ...v, req: { ...v.req, protein: parseFloat(e.target.value) } }))} />
-        </td>
-        <td>
-          <input type="number" value={state.value.req.carbs} onChange={(e) => updateMap((v) => ({ ...v, req: { ...v.req, carbs: parseFloat(e.target.value) } }))} />
-        </td>
-        <td>
-          <input type="number" value={state.value.req.fat} onChange={(e) => updateMap((v) => ({ ...v, req: { ...v.req, fat: parseFloat(e.target.value) } }))} />
+          <input type="number" defaultValue={state.value.req.caloricPerc} onChange={(e) => updateMap((v) => ({ ...v, req: { ...v.req, caloricPerc: parseFloat(e.target.value) } }))} />
         </td>
         <td>
           <input type="text" value={state.value.req.tags.join(",")} onChange={(e) => updateMap((v) => ({ ...v, req: { ...v.req, tags: e.target.value.split(",") } }))} />
@@ -392,14 +389,15 @@ const MealReqComponent: React.FC<{ id: string }> = ({ id }) => {
 };
 
 const Solution = () => {
+  const state = useMealReqState();
   const sol = useSolutionState();
   if (sol.tag === "init") return <>Init</>;
   if (sol.tag === "unsolvable") return <>Unsolvable</>;
   return (
     <div>
       {sol.solution.map((s, i) => (
-        <div key={s.mealSpec.name + i}>
-          <div>{s.mealSpec.name}: </div>
+        <div key={s.mealSpecPerc.name + i}>
+          <div>{s.mealSpecPerc.name}: </div>
           <div style={{ marginLeft: 20 }}>
             {s.mealParts.map((p, j) => (
               <div key={j}>
@@ -409,19 +407,13 @@ const Solution = () => {
           </div>
         </div>
       ))}
-
       {(([p, c, f]) => (
         <>
           <div>
             Total: <PrettyNutritionValues proteins={p} carbs={c} fats={f} />
           </div>
           <div>
-            Diff:{" "}
-            <PrettyNutritionValues
-              proteins={p - sol.solution.reduce((a, v) => a + v.mealSpec.req.protein, 0)}
-              carbs={c - sol.solution.reduce((a, v) => a + v.mealSpec.req.carbs, 0)}
-              fats={f - sol.solution.reduce((a, v) => a + v.mealSpec.req.fat, 0)}
-            />
+            Diff: <PrettyNutritionValues proteins={p - state.totals.protein} carbs={c - state.totals.carbs} fats={f - state.totals.fat} />
           </div>
         </>
       ))(sol.solution.flatMap((s) => s.mealParts).reduce((a, v) => [a[0] + v.meal.protein * v.quantity, a[1] + v.meal.carbs * v.quantity, a[2] + v.meal.fat * v.quantity], [0, 0, 0]))}
@@ -516,21 +508,21 @@ const IngredientsList = () => {
 const tabs: TabsProps["items"] = [
   {
     key: "1",
-    label: "Home",
+    label: "Solver",
     children: (
-      <div className="App">
+      <div>
         <RequirementsMaker />
         <Solution />
       </div>
     ),
   },
   {
-    key: "2",
+    key: "3",
     label: "Ingredients",
     children: <Ingredients />,
   },
   {
-    key: "3",
+    key: "4",
     label: "Account",
     children: "TODO",
   },
@@ -546,11 +538,13 @@ function App() {
   );
 }
 
-const defaultMealSpec: MealSpec = { name: "", req: { protein: 0, carbs: 0, fat: 0, tags: [] }, variant: "any", forced: [], tolerance: 0 };
+const defaultMealSpecPerc: MealSpecPerc = { name: "", req: { caloricPerc: 1, tags: [] }, variant: "any", forced: [], tolerance: 0 };
 
-const useMealReqState = create<{ tolerance: number; items: { id: string; value: MealSpec }[]; schema?: WithId<MealSchemaEntry> }>(() => ({
-  items: [{ id: "0", value: { ...defaultMealSpec } }],
+const useMealReqState = create<{ tolerance: number; items: { id: string; value: MealSpecPerc }[]; totals: { protein: number; carbs: number; fat: number }; schema?: WithId<MealSchemaEntry> }>(() => ({
+  items: [{ id: "0", value: { ...defaultMealSpecPerc } }],
   tolerance: 0.1,
+  totals: { protein: 0, carbs: 0, fat: 0 },
 }));
-const useSolutionState = create<{ tag: "solved"; solution: { mealSpec: MealSpec; mealParts: MealPart[] }[] } | { tag: "init" } | { tag: "unsolvable" }>(() => ({ tag: "init" }));
+
+const useSolutionState = create<{ tag: "solved"; solution: { mealSpecPerc: MealSpecPerc; mealParts: MealPart[] }[] } | { tag: "init" } | { tag: "unsolvable" }>(() => ({ tag: "init" }));
 export default App;
