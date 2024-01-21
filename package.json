@@ -1,0 +1,13 @@
+{
+  "name": "root",
+  "private": true,
+  "dependencies": {
+    "glpk.js": "^4.0.1"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "prettier": "^2.5.1"
+  }
+}
