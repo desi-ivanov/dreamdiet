@@ -409,9 +409,21 @@ const Solution = () => {
           </div>
         </div>
       ))}
-      Total:{" "}
+
       {(([p, c, f]) => (
-        <PrettyNutritionValues proteins={p} carbs={c} fats={f} />
+        <>
+          <div>
+            Total: <PrettyNutritionValues proteins={p} carbs={c} fats={f} />
+          </div>
+          <div>
+            Diff:{" "}
+            <PrettyNutritionValues
+              proteins={p - sol.solution.reduce((a, v) => a + v.mealSpec.req.protein, 0)}
+              carbs={c - sol.solution.reduce((a, v) => a + v.mealSpec.req.carbs, 0)}
+              fats={f - sol.solution.reduce((a, v) => a + v.mealSpec.req.fat, 0)}
+            />
+          </div>
+        </>
       ))(sol.solution.flatMap((s) => s.mealParts).reduce((a, v) => [a[0] + v.meal.protein * v.quantity, a[1] + v.meal.carbs * v.quantity, a[2] + v.meal.fat * v.quantity], [0, 0, 0]))}
     </div>
   );
