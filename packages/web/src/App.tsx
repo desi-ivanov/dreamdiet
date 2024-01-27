@@ -517,12 +517,12 @@ const tabs: TabsProps["items"] = [
     ),
   },
   {
-    key: "3",
+    key: "2",
     label: "Ingredients",
     children: <Ingredients />,
   },
   {
-    key: "4",
+    key: "3",
     label: "Account",
     children: "TODO",
   },
