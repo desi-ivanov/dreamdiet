@@ -24,9 +24,6 @@ jobs:
 
       - run: yarn install
 
-      - name: Build core
-        run: yarn workspace @dreamdiet/core run build
-
       - name: Build web
         run: yarn workspace @dreamdiet/web run build
 
