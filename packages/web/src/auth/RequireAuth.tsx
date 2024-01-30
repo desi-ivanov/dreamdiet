@@ -1,11 +1,8 @@
-import { useAuthStore } from "./authStore";
-import {
-  EmailAuthProvider,
-  GoogleAuthProvider,
-} from "firebase/auth";
-import StyledFirebaseAuth from "./StyledFirebaseAuth";
+import { Flex, Layout, Spin } from "antd";
+import { EmailAuthProvider, GoogleAuthProvider } from "firebase/auth";
 import { auth } from "../initializeFirebase";
-import { Flex, Layout, Progress, Spin } from "antd";
+import StyledFirebaseAuth from "./StyledFirebaseAuth";
+import { useAuthStore } from "./authStore";
 export const AuthPage = () => {
   const uiConfig: firebaseui.auth.Config = {
     signInFlow: "popup",
@@ -33,10 +30,10 @@ export const AuthPage = () => {
 
 export const RequireAuth: React.FC<{ children: JSX.Element }> = ({ children }): JSX.Element => {
   const auth = useAuthStore();
-  if(auth.tag === "initializing") {
+  if (auth.tag === "initializing") {
     return <Spin />;
   }
-  if(auth.tag !== "authenticated") {
+  if (auth.tag !== "authenticated") {
     return <AuthPage />;
   }
 

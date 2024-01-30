@@ -7,7 +7,7 @@ export const useFirestoreQuery = <T extends DocumentData>(f: () => Query<T> | un
   const [state, setState] = useState<UseFirestoreResult<WithId<T>[]>>({ tag: "loading" });
   useEffect(() => {
     const q = f();
-    if(!q) return setState({ tag: "undefined" });
+    if (!q) return setState({ tag: "undefined" });
     return onSnapshot(
       q,
       (snapshot) => setState({ tag: "value", value: snapshot.docs.map((d) => ({ id: d.id, data: d.data() })) }),
@@ -16,6 +16,7 @@ export const useFirestoreQuery = <T extends DocumentData>(f: () => Query<T> | un
         setState({ tag: "error", error });
       }
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
   return state;
 };

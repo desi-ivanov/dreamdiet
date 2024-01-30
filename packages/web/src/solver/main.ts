@@ -1,6 +1,6 @@
 import { LP } from "glpk.js";
 import GLPK from "glpk.js";
-import { Meal, MealPart, MealSpec, MealSpecPerc } from "@dreamdiet/interfaces/src/index";
+import { Meal, MealPart, MealSpecPerc } from "@dreamdiet/interfaces/src/index";
 
 const groupBy = <T>(arr: T[], key: (t: T) => string): { [key: string]: T[] } => {
   const res: { [key: string]: T[] } = {};

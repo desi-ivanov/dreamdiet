@@ -23,16 +23,16 @@ const StyledFirebaseAuth = ({ uiConfig, firebaseAuth, className, uiCallback }: P
   useEffect(() => {
     // Get or Create a firebaseUI instance.
     const firebaseUiWidget = firebaseui.auth.AuthUI.getInstance() || new firebaseui.auth.AuthUI(firebaseAuth);
-    if(uiConfig.signInFlow === "popup") firebaseUiWidget.reset();
+    if (uiConfig.signInFlow === "popup") firebaseUiWidget.reset();
 
     // We track the auth state to reset firebaseUi if the user signs out.
     const unregisterAuthObserver = onAuthStateChanged(firebaseAuth, (user) => {
-      if(!user && userSignedIn) firebaseUiWidget.reset();
+      if (!user && userSignedIn) firebaseUiWidget.reset();
       setUserSignedIn(!!user);
     });
 
     // Trigger the callback if any was set.
-    if(uiCallback) uiCallback(firebaseUiWidget);
+    if (uiCallback) uiCallback(firebaseUiWidget);
 
     // Render the firebaseUi Widget.
     // @ts-ignore
@@ -42,6 +42,7 @@ const StyledFirebaseAuth = ({ uiConfig, firebaseAuth, className, uiCallback }: P
       unregisterAuthObserver();
       firebaseUiWidget.reset();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uiConfig]);
 
   return <div className={className} ref={elementRef} />;

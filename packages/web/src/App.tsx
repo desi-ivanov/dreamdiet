@@ -1,4 +1,4 @@
-import { Ingredient, MealPart, MealReqPerc, MealSchemaEntry, MealSpec, MealSpecPerc, WithId } from "@dreamdiet/interfaces/src/";
+import { Ingredient, MealPart, MealSchemaEntry, MealSpecPerc, WithId } from "@dreamdiet/interfaces/src/";
 import { Alert, Button, Flex, Form, Input, InputNumber, Space, Spin, Table, Tabs, TabsProps, Tag } from "antd";
 import { useForm } from "antd/es/form/Form";
 import confirm from "antd/es/modal/confirm";
