@@ -13,7 +13,7 @@ import { FullscreenLoader, loader } from "./components/Loader";
 import { mealSchemaCollection, plainIngredients } from "./data/collections";
 import { useFirestoreQuery } from "./hooks/useFirestoreQuery";
 import { db } from "./solver/db";
-import { minTolerane } from "./solver/main";
+import { binSearchMinTolerance } from "./solver/main";
 import { errToStr, showError } from "./utils/showError";
 import { tagF } from "./utils/tagF";
 
@@ -38,7 +38,7 @@ const RequirementsMaker = () => {
     loader(() =>
       loadGlpk()
         .then((glpk) =>
-          minTolerane(
+          binSearchMinTolerance(
             {
               glpk,
               mealSpecs: state.items.map((x) => x.value),

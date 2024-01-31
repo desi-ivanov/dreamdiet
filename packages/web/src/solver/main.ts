@@ -111,7 +111,7 @@ export const solver2 = async (problem: Problem): Promise<{ mealSpecPerc: MealSpe
     mealParts: v,
   }));
 };
-export const minTolerane = async (problem: Problem, stopRangeLR: number): Promise<Awaited<ReturnType<typeof solver2>>> => {
+export const binSearchMinTolerance = async (problem: Problem, stopRangeLR: number): Promise<Awaited<ReturnType<typeof solver2>>> => {
   let l = 0;
   let r = 5;
   let p: Awaited<ReturnType<typeof solver2>> | null = null;
