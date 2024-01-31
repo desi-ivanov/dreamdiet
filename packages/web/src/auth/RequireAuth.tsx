@@ -3,6 +3,8 @@ import { EmailAuthProvider, GoogleAuthProvider } from "firebase/auth";
 import { auth } from "../initializeFirebase";
 import StyledFirebaseAuth from "./StyledFirebaseAuth";
 import { useAuthStore } from "./authStore";
+import logoBig from "./logo-big.png";
+
 export const AuthPage = () => {
   const uiConfig: firebaseui.auth.Config = {
     signInFlow: "popup",
@@ -18,9 +20,14 @@ export const AuthPage = () => {
   };
   return (
     <Layout.Content>
-      <Flex gap={1}>
-        <Flex align="center">
-          <strong>DreamDiet</strong>
+      <Flex gap={1} dir="vertical">
+        <Flex align="center" dir="vertical">
+          <div>
+            <strong>DreamDiet</strong>
+          </div>
+          <div>
+            <img src={logoBig} alt="DreamDiet" style={{ width: 100 }} />
+          </div>
         </Flex>
         <StyledFirebaseAuth uiConfig={uiConfig} firebaseAuth={auth} />
       </Flex>
