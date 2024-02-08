@@ -7,8 +7,9 @@ import {
   type CreateMealSchemaResponse,
   type UpdateMealSchemaRequest,
   type DeleteMealSchemaRequest,
-  SearchRequest,
-  IngredientsSearchResponse,
+  type SearchRequest,
+  type IngredientsSearchResponse,
+  type SetPublicIngredientRequest,
 } from "@dreamdiet/interfaces/src/index";
 import { HttpsCallable, connectFunctionsEmulator, httpsCallable } from "firebase/functions";
 import { functions } from "../initializeFirebase";
@@ -27,4 +28,5 @@ export const api = {
   updateMealSchema: httpsCallableGood<UpdateMealSchemaRequest, {}>("updateMealSchema"),
   deleteMealSchema: httpsCallableGood<DeleteMealSchemaRequest, {}>("deleteMealSchema"),
   searchIngredient: httpsCallableGood<SearchRequest, IngredientsSearchResponse>("searchIngredient"),
+  setPublicIngredient: httpsCallableGood<SetPublicIngredientRequest, {}>("setPublicIngredient"),
 };

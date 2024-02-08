@@ -12,6 +12,12 @@ export const IngredientsList = () => {
     loader(() => api.removeIngredient({ id }));
   };
 
+  const handlePublicToggle = (id: string) => {
+    if (res.tag !== "value") return;
+    const ingredient = res.value.find((x) => x.id === id);
+    loader(() => api.setPublicIngredient({ id, public: !ingredient?.data.public }));
+  };
+
   return res.tag === "loading" ? (
     <Spin />
   ) : res.tag === "undefined" ? (
@@ -33,6 +39,7 @@ export const IngredientsList = () => {
           render: (_, record) => (
             <Space size="middle">
               <Button onClick={() => handleRemove(record.id)}>Delete</Button>
+              {isAdmin() && <Button onClick={() => handlePublicToggle(record.id)}>Make {record.public ? "private" : "public"}</Button>}
             </Space>
           ),
         },
