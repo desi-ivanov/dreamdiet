@@ -4,9 +4,50 @@ export const defaultMealSpecPerc: MealSpecPerc = { name: "", req: { caloricPerc:
 
 export const useMealReqState = create<{ tolerance: number; items: { id: string; value: MealSpecPerc }[]; totals: { protein: number; carbs: number; fat: number }; schema?: WithId<MealSchemaEntry> }>(
   () => ({
-    items: [{ id: "0", value: { ...defaultMealSpecPerc } }],
+    items: [
+      {
+        id: "0",
+        value: {
+          name: "Breakfast",
+          req: { caloricPerc: 0.3, tags: ["breakfast"] },
+          variant: "any",
+          forced: [],
+          tolerance: 0.1,
+        },
+      },
+      {
+        id: "1",
+        value: {
+          name: "Lunch",
+          req: { caloricPerc: 0.3, tags: ["lunch"] },
+          variant: "any",
+          forced: [],
+          tolerance: 0.1,
+        },
+      },
+      {
+        id: "2",
+        value: {
+          name: "Snack",
+          req: { caloricPerc: 0.1, tags: ["snack"] },
+          variant: "any",
+          forced: [],
+          tolerance: 0.1,
+        },
+      },
+      {
+        id: "3",
+        value: {
+          name: "Dinner",
+          req: { caloricPerc: 0.3, tags: ["dinner"] },
+          variant: "any",
+          forced: [],
+          tolerance: 0.1,
+        },
+      },
+    ],
     tolerance: 0.1,
-    totals: { protein: 0, carbs: 0, fat: 0 },
+    totals: { protein: 60, carbs: 350, fat: 90 },
   })
 );
 
