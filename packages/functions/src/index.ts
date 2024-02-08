@@ -5,13 +5,13 @@ import {
   type IngredientEntry,
   type UpdateIngredientRequest,
   type RemoveIngredientRequest,
-  CreateMealSchemaRequest,
-  MealSchemaEntry,
-  CreateMealSchemaResponse,
-  UpdateMealSchemaRequest,
-  DeleteMealSchemaRequest,
-  SearchRequest,
-  IngredientsSearchResponse,
+  type CreateMealSchemaRequest,
+  type MealSchemaEntry,
+  type CreateMealSchemaResponse,
+  type UpdateMealSchemaRequest,
+  type DeleteMealSchemaRequest,
+  type SearchRequest,
+  type IngredientsSearchResponse,
 } from "@dreamdiet/interfaces/src/index";
 import { withAuth } from "./withAuth";
 import { initializeApp } from "firebase-admin/app";
