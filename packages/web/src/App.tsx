@@ -116,15 +116,7 @@ const RequirementsMaker = () => {
       <table>
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Caloricperc</th>
-            <th>Tags</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Total {state.totals.protein * 4 + state.totals.carbs * 4 + state.totals.fat * 9}kcal</td>
+            <td>Daily total {state.totals.protein * 4 + state.totals.carbs * 4 + state.totals.fat * 9}kcal</td>
             <td>
               P<input type="number" value={state.totals.protein} onChange={(e) => useMealReqState.setState((z) => ({ ...z, totals: { ...z.totals, protein: parseInt(e.target.value) } }))} />
             </td>
@@ -135,6 +127,14 @@ const RequirementsMaker = () => {
               F<input type="number" value={state.totals.fat} onChange={(e) => useMealReqState.setState((z) => ({ ...z, totals: { ...z.totals, fat: parseInt(e.target.value) } }))} />
             </td>
           </tr>
+          <tr>
+            <th>Name</th>
+            <th>Caloricperc</th>
+            <th>Tags</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
           {state.items.map((req) => (
             <MealReqComponent key={req.id} id={req.id} />
           ))}
