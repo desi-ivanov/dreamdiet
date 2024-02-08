@@ -11,13 +11,12 @@
     "logs": "firebase functions:log"
   },
   "engines": {
-    "node": "16"
+    "node": "18"
   },
   "main": "lib/index.js",
   "dependencies": {
     "firebase-admin": "^11.8.0",
-    "firebase-functions": "^4.3.1",
-    "@dreamdiet/interfaces": "0.0.1"
+    "firebase-functions": "^4.3.1"
   },
   "devDependencies": {
     "typescript": "^4.9.0",
