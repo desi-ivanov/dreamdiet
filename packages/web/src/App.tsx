@@ -1,21 +1,20 @@
-import { Ingredient, MealPart, MealSchemaEntry, MealSpecPerc, WithId } from "@dreamdiet/interfaces/src/";
+import { Ingredient, MealSpecPerc } from "@dreamdiet/interfaces/src/";
 import { Alert, Button, Flex, Form, Input, InputNumber, Space, Spin, Table, Tabs, TabsProps, Tag } from "antd";
 import { useForm } from "antd/es/form/Form";
 import confirm from "antd/es/modal/confirm";
 import { query, where } from "firebase/firestore";
 import type { GLPK } from "glpk.js";
 import React, { useMemo, useState } from "react";
-import { create } from "zustand";
 import { api } from "./api/api";
 import { RequireAuth } from "./auth/RequireAuth";
 import { useAuthStore } from "./auth/authStore";
 import { FullscreenLoader, loader } from "./components/Loader";
 import { mealSchemaCollection, plainIngredients } from "./data/collections";
 import { useFirestoreQuery } from "./hooks/useFirestoreQuery";
-import { db } from "./solver/db";
 import { binSearchMinTolerance } from "./solver/main";
 import { errToStr, showError } from "./utils/showError";
 import { tagF } from "./utils/tagF";
+import { useMealReqState, useSolutionState, defaultMealSpecPerc } from "./mealSpecState";
 
 const loadGlpk = () => import("glpk.js").then(({ default: loadGlpk }) => (loadGlpk as () => Promise<GLPK>)());
 const Colors = {
@@ -34,7 +33,10 @@ const PrettyNutritionValues: React.FC<{ proteins: number; carbs: number; fats: n
 
 const RequirementsMaker = () => {
   const state = useMealReqState((s) => s);
+  const uid = useAuthStore((s) => tagF(s, "authenticated", (u) => u.user.uid) ?? undefined);
+  const res = useMyPlainIngredients(uid);
   const solve = () => {
+    const ings = res.tag === "value" ? res.value.map((x) => x.data.ingredient) : [];
     loader(() =>
       loadGlpk()
         .then((glpk) =>
@@ -44,7 +46,7 @@ const RequirementsMaker = () => {
               mealSpecs: state.items.map((x) => x.value),
               tolerance: state.tolerance,
               totals: state.totals,
-              meals: db,
+              meals: ings.map((x) => ({ ...x, protein: x.proteins, carbs: x.carbs, fat: x.fats })),
             },
             0.001
           )
@@ -121,11 +123,8 @@ const RequirementsMaker = () => {
           </tr>
         </thead>
         <tbody>
-          {state.items.map((req) => (
-            <MealReqComponent key={req.id} id={req.id} />
-          ))}
           <tr>
-            <td>Total {state.totals.protein * 4 + state.totals.carbs * 4 + state.totals.fat * 9}c</td>
+            <td>Total {state.totals.protein * 4 + state.totals.carbs * 4 + state.totals.fat * 9}kcal</td>
             <td>
               P<input type="number" value={state.totals.protein} onChange={(e) => useMealReqState.setState((z) => ({ ...z, totals: { ...z.totals, protein: parseInt(e.target.value) } }))} />
             </td>
@@ -136,6 +135,9 @@ const RequirementsMaker = () => {
               F<input type="number" value={state.totals.fat} onChange={(e) => useMealReqState.setState((z) => ({ ...z, totals: { ...z.totals, fat: parseInt(e.target.value) } }))} />
             </td>
           </tr>
+          {state.items.map((req) => (
+            <MealReqComponent key={req.id} id={req.id} />
+          ))}
         </tbody>
       </table>
       <Space direction="horizontal">
@@ -164,7 +166,7 @@ const SchemaSelector = () => {
         ...s,
         schema: schema,
         totals: totals,
-        items: schema.data.schema.specs.map((x, i) => ({ id: i + "", value: x as MealSpecPerc })),
+        items: schema.data.schema.specs.map((x, i) => ({ id: x.name + i + "", value: x as MealSpecPerc })),
       }));
     }
   };
@@ -538,13 +540,4 @@ function App() {
   );
 }
 
-const defaultMealSpecPerc: MealSpecPerc = { name: "", req: { caloricPerc: 1, tags: [] }, variant: "any", forced: [], tolerance: 0 };
-
-const useMealReqState = create<{ tolerance: number; items: { id: string; value: MealSpecPerc }[]; totals: { protein: number; carbs: number; fat: number }; schema?: WithId<MealSchemaEntry> }>(() => ({
-  items: [{ id: "0", value: { ...defaultMealSpecPerc } }],
-  tolerance: 0.1,
-  totals: { protein: 0, carbs: 0, fat: 0 },
-}));
-
-const useSolutionState = create<{ tag: "solved"; solution: { mealSpecPerc: MealSpecPerc; mealParts: MealPart[] }[] } | { tag: "init" } | { tag: "unsolvable" }>(() => ({ tag: "init" }));
 export default App;

@@ -29,9 +29,10 @@ export const solver2 = async (problem: Problem): Promise<{ mealSpecPerc: MealSpe
     usable:
       p.variant === "only-use" || p.variant === "exactly"
         ? problem.meals.filter((meal) => p.forced.some((f) => f.name === meal.name))
-        : problem.meals.filter((meal) => meal.tags.length === 0 || p.req.tags.length === 0 || meal.tags.some((tag) => reqTags[i].has(tag))),
+        : problem.meals.filter(
+            (meal) => (p.variant === "at-least" && p.forced.some((f) => f.name === meal.name)) || meal.tags.length === 0 || p.req.tags.length === 0 || meal.tags.some((tag) => reqTags[i].has(tag))
+          ),
   }));
-
   const lp: LP = {
     name: "Meal Planner",
     objective: {
