@@ -12,10 +12,12 @@ import {
   type DeleteMealSchemaRequest,
   type SearchRequest,
   type IngredientsSearchResponse,
+  SetPublicIngredientRequest,
 } from "@dreamdiet/interfaces/src/index";
 import { withAuth } from "./withAuth";
 import { initializeApp } from "firebase-admin/app";
 import { CollectionReference, Filter, getFirestore } from "firebase-admin/firestore";
+import { auth } from "firebase-admin";
 
 const app = initializeApp();
 
@@ -108,5 +110,16 @@ export const searchIngredient = onCall(
       .limit(size)
       .get();
     return { values: querySnapshot.docs.map((doc) => doc.data().ingredient) };
+  })
+);
+
+export const setPublicIngredient = onCall(
+  withAuth<SetPublicIngredientRequest, {}>(async (req) => {
+    const { id } = req.data;
+    const doc = await plainIngredientsCollection.doc(id).get();
+    if (!doc.exists) throw new Error("No such ingredient");
+    await doc.ref.update({
+      public: true,
+    });
   })
 );

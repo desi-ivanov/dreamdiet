@@ -1,5 +1,5 @@
 import { Ingredient, MealSpecPerc } from "@dreamdiet/interfaces/src/";
-import { Alert, Button, Flex, Form, Input, InputNumber, Space, Spin, Table, Tabs, TabsProps, Tag } from "antd";
+import { Alert, Button, Form, Input, Space, Spin, Tabs, TabsProps } from "antd";
 import { useForm } from "antd/es/form/Form";
 import confirm from "antd/es/modal/confirm";
 import { query, where } from "firebase/firestore";
@@ -9,12 +9,15 @@ import { api } from "./api/api";
 import { RequireAuth } from "./auth/RequireAuth";
 import { useAuthStore } from "./auth/authStore";
 import { FullscreenLoader, loader } from "./components/Loader";
-import { mealSchemaCollection, plainIngredients } from "./data/collections";
+import { mealSchemaCollection } from "./data/collections";
 import { useFirestoreQuery } from "./hooks/useFirestoreQuery";
+import { IngredientsListPage } from "./ingredients/IngredientsListPage";
+import { defaultMealSpecPerc, useMealReqState, useSolutionState } from "./mealSpecState";
 import { binSearchMinTolerance } from "./solver/main";
 import { errToStr, showError } from "./utils/showError";
 import { tagF } from "./utils/tagF";
-import { useMealReqState, useSolutionState, defaultMealSpecPerc } from "./mealSpecState";
+import { useMyPlainIngredients } from "./ingredients/useMyPlainIngredients";
+import { AccountPage } from "./account/AccountPage";
 
 const loadGlpk = () => import("glpk.js").then(({ default: loadGlpk }) => (loadGlpk as () => Promise<GLPK>)());
 const Colors = {
@@ -423,94 +426,10 @@ const Solution = () => {
   );
 };
 
-const Ingredients = () => {
-  const [form] = useForm<{ name: string; protein: number; carbs: number; fat: number; tags?: string }>();
-  const handleAdd = (values: { name: string; protein: number; carbs: number; fat: number; tags?: string }) => {
-    return loader(() =>
-      api.addIngredient({
-        ingredient: {
-          name: values.name,
-          proteins: values.protein,
-          carbs: values.carbs,
-          fats: values.fat,
-          tags: values.tags?.split(",") ?? [],
-        },
-      })
-    ).then(() => form.resetFields());
-  };
-  return (
-    <Flex vertical>
-      <Space>
-        <Form onFinish={handleAdd} form={form} style={{ maxWidth: 600 }}>
-          <Form.Item name="name" label="Name" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="protein" label="Protein" rules={[{ type: "number", min: 0, required: true }]}>
-            <InputNumber addonAfter="g" />
-          </Form.Item>
-          <Form.Item name="carbs" label="Carbs" rules={[{ type: "number", min: 0, required: true }]}>
-            <InputNumber addonAfter="g" />
-          </Form.Item>
-          <Form.Item name="fat" label="Fat" rules={[{ type: "number", min: 0, required: true }]}>
-            <InputNumber addonAfter="g" />
-          </Form.Item>
-          <Form.Item name="tags" label="Tags">
-            <Input />
-          </Form.Item>
-          <Form.Item>
-            <Button htmlType="submit">Add</Button>
-          </Form.Item>
-        </Form>
-      </Space>
-      <IngredientsList />
-    </Flex>
-  );
-};
-
-const useMyPlainIngredients = (uid: string | undefined) => {
-  return useFirestoreQuery(() => query(plainIngredients, where("owner", "==", uid)), [uid]);
-};
-
-const IngredientsList = () => {
-  const uid = useAuthStore((s) => tagF(s, "authenticated", (u) => u.user.uid) ?? undefined);
-  const res = useMyPlainIngredients(uid);
-  const handleRemove = (id: string) => {
-    loader(() => api.removeIngredient({ id }));
-  };
-
-  return res.tag === "loading" ? (
-    <Spin />
-  ) : res.tag === "undefined" ? (
-    <></>
-  ) : res.tag === "error" ? (
-    <Alert message={`Error: ${res.error.message}`} />
-  ) : (
-    <Table
-      dataSource={res.value.map((x) => ({ ...x.data.ingredient, key: x.id, id: x.id }))}
-      columns={[
-        { title: "Name", dataIndex: "name" },
-        { title: "Protein", dataIndex: "proteins" },
-        { title: "Carbs", dataIndex: "carbs" },
-        { title: "Fat", dataIndex: "fats" },
-        { title: "Tags", dataIndex: "tags", render: (_, { tags }) => tags.map((t: string) => <Tag key={t}>{t}</Tag>) },
-        {
-          title: "Action",
-          key: "action",
-          render: (_, record) => (
-            <Space size="middle">
-              <Button onClick={() => handleRemove(record.id)}>Delete</Button>
-            </Space>
-          ),
-        },
-      ]}
-    />
-  );
-};
-
 const tabs: TabsProps["items"] = [
   {
     key: "1",
-    label: "Solver",
+    label: "Diet",
     children: (
       <div>
         <RequirementsMaker />
@@ -521,12 +440,12 @@ const tabs: TabsProps["items"] = [
   {
     key: "2",
     label: "Ingredients",
-    children: <Ingredients />,
+    children: <IngredientsListPage />,
   },
   {
     key: "3",
     label: "Account",
-    children: "TODO",
+    children: <AccountPage />,
   },
 ];
 function App() {

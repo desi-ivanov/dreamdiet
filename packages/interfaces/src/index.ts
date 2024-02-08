@@ -20,6 +20,11 @@ export type RemoveIngredientRequest = {
   id: string;
 };
 
+export type SetPublicIngredientRequest = {
+  id: string;
+  public: boolean;
+};
+
 export type UpdateIngredientRequest = {
   id: string;
   ingredient: Ingredient;

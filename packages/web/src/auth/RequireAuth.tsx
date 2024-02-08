@@ -20,13 +20,10 @@ export const AuthPage = () => {
   };
   return (
     <Layout.Content>
-      <Flex gap={1} dir="vertical">
-        <Flex align="center" dir="vertical">
+      <Flex gap={1} vertical>
+        <Flex align="center" vertical>
           <div>
-            <strong>DreamDiet</strong>
-          </div>
-          <div>
-            <img src={logoBig} alt="DreamDiet" style={{ width: 100 }} />
+            <img src={logoBig} alt="DreamDiet" style={{ width: 200 }} />
           </div>
         </Flex>
         <StyledFirebaseAuth uiConfig={uiConfig} firebaseAuth={auth} />
