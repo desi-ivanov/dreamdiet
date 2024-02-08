@@ -17,7 +17,6 @@ import {
 import { withAuth } from "./withAuth";
 import { initializeApp } from "firebase-admin/app";
 import { CollectionReference, Filter, getFirestore } from "firebase-admin/firestore";
-import { auth } from "firebase-admin";
 
 const app = initializeApp();
 
