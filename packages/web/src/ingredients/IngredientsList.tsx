@@ -26,7 +26,7 @@ export const IngredientsList = () => {
     <Alert message={`Error: ${res.error.message}`} />
   ) : (
     <Table
-      dataSource={res.value.map((x) => ({ ...x.data.ingredient, key: x.id, id: x.id, public: x.data.public }))}
+      dataSource={res.value.filter((x) => x.data.owner === uid?.user.uid).map((x) => ({ ...x.data.ingredient, key: x.id, id: x.id, public: x.data.public, owner: x.data.owner }))}
       columns={[
         { title: "Name", dataIndex: "name" },
         { title: "Protein", dataIndex: "proteins" },
