@@ -118,7 +118,7 @@ export const setPublicIngredient = onCall(
     const doc = await plainIngredientsCollection.doc(id).get();
     if (!doc.exists) throw new Error("No such ingredient");
     await doc.ref.update({
-      public: true,
+      public: req.data.public,
     });
   })
 );
