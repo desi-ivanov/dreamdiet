@@ -2,7 +2,7 @@
 
 Make the diet of your dreams: https://desi-ivanov.github.io/dreamdiet
 
-Create a nutirion plan based on your daily target of calories, proteins and fats.
+Create a nutirion plan based on your daily target of calories, carbohydrates, proteins and fats.
 
 ## Disclaimer
 
