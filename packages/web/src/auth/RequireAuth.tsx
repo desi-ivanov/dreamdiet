@@ -8,7 +8,7 @@ import logoBig from "./logo-big.png";
 export const AuthPage = () => {
   const uiConfig: firebaseui.auth.Config = {
     signInFlow: "popup",
-    signInSuccessUrl: "/",
+    signInSuccessUrl: "/dreamdiet",
     signInOptions: [
       {
         provider: EmailAuthProvider.PROVIDER_ID,
